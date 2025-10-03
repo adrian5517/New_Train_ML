@@ -11,9 +11,32 @@ app = Flask(__name__)
 # -------------------------------
 knn_model_path = os.path.join("models", "apartment_knn_model.pkl")
 kmeans_model_path = os.path.join("models", "apartment_kmeans_model.pkl")
+thresholds_path = os.path.join("models", "category_thresholds.pkl")
 
 knn = joblib.load(knn_model_path)
 kmeans = joblib.load(kmeans_model_path)
+
+# Load category thresholds
+try:
+    thresholds = joblib.load(thresholds_path)
+    percentile_33 = thresholds['percentile_33']
+    percentile_67 = thresholds['percentile_67']
+    print(f"✅ Category thresholds loaded:")
+    print(f"   Low Budget: ≤ ₱{percentile_33:,.0f}")
+    print(f"   Mid Range: ₱{percentile_33:,.0f} - ₱{percentile_67:,.0f}")
+    print(f"   High End: > ₱{percentile_67:,.0f}")
+except FileNotFoundError:
+    # Fallback to default values if thresholds file doesn't exist
+    print("⚠️ Thresholds file not found, using default values")
+    percentile_33 = 7000
+    percentile_67 = 14000
+    thresholds = {
+        'percentile_33': percentile_33,
+        'percentile_67': percentile_67,
+        'min_price': 2000,
+        'max_price': 20000,
+        'median_price': 10000
+    }
 
 # Optional: Map KMeans clusters to labels
 cluster_to_category = {0: "Low Budget", 1: "Mid Range", 2: "High End"}
@@ -30,7 +53,17 @@ def home():
             "/predict_knn": "POST - Predict category using KNN",
             "/predict_kmeans": "POST - Predict cluster using KMeans"
         },
-        "version": "1.0.0"
+        "categories": {
+            "Low Budget": f"≤ ₱{percentile_33:,.0f}",
+            "Mid Range": f"₱{percentile_33:,.0f} - ₱{percentile_67:,.0f}",
+            "High End": f"> ₱{percentile_67:,.0f}"
+        },
+        "price_range": {
+            "min": f"₱{thresholds['min_price']:,.0f}",
+            "max": f"₱{thresholds['max_price']:,.0f}",
+            "median": f"₱{thresholds['median_price']:,.0f}"
+        },
+        "version": "2.0.0"
     })
 
 # -------------------------------

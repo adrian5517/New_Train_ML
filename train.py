@@ -64,17 +64,35 @@ df_combined = pd.concat([df_synthetic, df_real], ignore_index=True)
 print(f"✅ Combined dataset size: {len(df_combined)}")
 
 # -------------------------------
-# 4️⃣ Add category label
+# 4️⃣ Add category label (Based on data percentiles)
 # -------------------------------
+# Calculate percentiles from actual data
+percentile_33 = df_combined['Price'].quantile(0.33)
+percentile_67 = df_combined['Price'].quantile(0.67)
+
+print(f"📊 Price Distribution:")
+print(f"   Min Price: ₱{df_combined['Price'].min():,.2f}")
+print(f"   Max Price: ₱{df_combined['Price'].max():,.2f}")
+print(f"   Median: ₱{df_combined['Price'].median():,.2f}")
+print(f"   33rd Percentile: ₱{percentile_33:,.2f}")
+print(f"   67th Percentile: ₱{percentile_67:,.2f}")
+
 def categorize(price):
-    if price <= 7000:
+    if price <= percentile_33:
         return "Low Budget"
-    elif price <= 14000:
+    elif price <= percentile_67:
         return "Mid Range"
     else:
         return "High End"
 
 df_combined['category'] = df_combined['Price'].apply(categorize)
+
+# Show category distribution
+print(f"\n📈 Category Distribution:")
+print(df_combined['category'].value_counts().sort_index())
+print(f"   Low Budget: ₱{df_combined['Price'].min():,.0f} - ₱{percentile_33:,.0f}")
+print(f"   Mid Range: ₱{percentile_33:,.0f} - ₱{percentile_67:,.0f}")
+print(f"   High End: ₱{percentile_67:,.0f} - ₱{df_combined['Price'].max():,.0f}")
 
 # -------------------------------
 # 5️⃣ Train KNN
@@ -97,6 +115,19 @@ os.makedirs("models", exist_ok=True)
 model_path = os.path.join("models", "apartment_knn_model.pkl")
 joblib.dump(knn, model_path)
 print(f"✅ Model saved at {model_path}")
+
+# Save category thresholds for API to use
+thresholds = {
+    'percentile_33': float(percentile_33),
+    'percentile_67': float(percentile_67),
+    'min_price': float(df_combined['Price'].min()),
+    'max_price': float(df_combined['Price'].max()),
+    'median_price': float(df_combined['Price'].median())
+}
+thresholds_path = os.path.join("models", "category_thresholds.pkl")
+joblib.dump(thresholds, thresholds_path)
+print(f"✅ Category thresholds saved at {thresholds_path}")
+print(f"   Thresholds: {thresholds}")
 
 # -------------------------------
 # 7️⃣ Train KMeans
