@@ -32,9 +32,14 @@ print("✅ Synthetic data prepared")
 # 2️⃣ Load real data from MongoDB
 # -------------------------------
 try:
-    client = MongoClient("mongodb+srv://ajboncodin:VM6TyKYYfZVVf4RL@rentifydb.gaifxpk.mongodb.net/?retryWrites=true&w=majority&appName=RentifyDB")  # <- Palitan mo
-    db = client["test"]                        # <- Palitan mo
-    collection = db["properties"]
+    # Get MongoDB URI from environment variable
+    mongodb_uri = os.environ.get("MONGODB_URI", "mongodb+srv://ajboncodin:VM6TyKYYfZVVf4RL@rentifydb.gaifxpk.mongodb.net/?retryWrites=true&w=majority&appName=RentifyDB")
+    mongodb_database = os.environ.get("MONGODB_DATABASE", "test")
+    mongodb_collection = os.environ.get("MONGODB_COLLECTION", "properties")
+    
+    client = MongoClient(mongodb_uri)
+    db = client[mongodb_database]
+    collection = db[mongodb_collection]
 
     docs = list(collection.find({}))
     df_real = pd.DataFrame(docs)
