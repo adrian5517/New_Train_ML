@@ -19,6 +19,21 @@ kmeans = joblib.load(kmeans_model_path)
 cluster_to_category = {0: "Low Budget", 1: "Mid Range", 2: "High End"}
 
 # -------------------------------
+# Endpoint: / (Health Check)
+# -------------------------------
+@app.route("/", methods=["GET"])
+def home():
+    return jsonify({
+        "status": "online",
+        "message": "Apartment ML API is running",
+        "endpoints": {
+            "/predict_knn": "POST - Predict category using KNN",
+            "/predict_kmeans": "POST - Predict cluster using KMeans"
+        },
+        "version": "1.0.0"
+    })
+
+# -------------------------------
 # Endpoint: /predict_knn
 # -------------------------------
 @app.route("/predict_knn", methods=["POST"])
